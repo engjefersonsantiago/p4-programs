@@ -1,0 +1,3 @@
+sudo rm -rf *.json
+sudo rm -rf *.pcap
+sudo killall lt-simple_switch
