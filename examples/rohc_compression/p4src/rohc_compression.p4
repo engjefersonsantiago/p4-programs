@@ -111,7 +111,7 @@ extern_type ExternRohcCompressor {
             quiet
             debug_mode
         */
-        type: string;
+        type: bit<1>;
     }
 
     method rohc_comp_header ();
@@ -128,7 +128,7 @@ extern_type ExternRohcDecompressor {
             quiet
             debug_mode
         */
-        type: string;
+        type: int<1>;
     }
 
     method rohc_decomp_header ();
