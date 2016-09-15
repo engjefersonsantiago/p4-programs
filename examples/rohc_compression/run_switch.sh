@@ -29,7 +29,7 @@ CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI
 # minutes to give it time to start, then add the entries and put the switch
 # process back in the foreground
 set -m
-$P4C_BM_SCRIPT p4src/rohc_compression.p4 --json rohc_compression.json --p4-v1.1 
+$P4C_BM_SCRIPT p4src/rohc_compression.p4 --json rohc_compression.json --primitives proprietary_primitives.json  --p4-v1.1 
 if [ $? -ne 0 ]; then
 echo "p4 compilation failed"
 exit 1

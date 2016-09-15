@@ -148,25 +148,31 @@ action _nop() {
 action set_port(in bit<9> port) {
     modify_field(standard_metadata.egress_spec, port);
     intrinsic_metadata.recirculate_flag = 0; 
+    //intrinsic_metadata.modify_and_resubmit_flag = 0; 
 }
 
 field_list resubmit_FL {
     intrinsic_metadata.recirculate_flag;
+    //intrinsic_metadata.modify_and_resubmit_flag;
 }
 
 action _resubmit() {
     recirculate(resubmit_FL);
+    //modify_and_resubmit(resubmit_FL);
 }
 
 action _decompress() {
     ethernet.etherType = 0x0800;
     my_rohc_decomp.rohc_decomp_header();  
+    //rohc_decomp_header();  
     intrinsic_metadata.recirculate_flag = 1;  
+    //intrinsic_metadata.modify_and_resubmit_flag = 1;  
 }
 
 action _compress () {
     //ipv4.ttl = ipv4.ttl - 1;
-    my_rohc_comp.rohc_comp_header();
+    //my_rohc_comp.rohc_comp_header();
+    rohc_comp_header();
     modify_field(ethernet.etherType, 0xDD00);
 }
 
@@ -193,6 +199,7 @@ table t_ingress_rohc_decomp {
 table t_resub {
     reads {
         intrinsic_metadata.recirculate_flag : exact;
+        //intrinsic_metadata.modify_and_resubmit_flag : exact;
     }
     actions {
         _nop; _resubmit;
@@ -240,10 +247,12 @@ control ingress {
     apply(t_ingress_1);
     apply(t_ingress_rohc_decomp);
     if(intrinsic_metadata.recirculate_flag == 1)			
+    //if(intrinsic_metadata.modify_and_resubmit_flag == 1)			
 	      apply(t_resub);
 }
 
 control egress {
     if(intrinsic_metadata.recirculate_flag != 1)
+    //if(intrinsic_metadata.modify_and_resubmit_flag != 1)
         apply(t_compress);
 }
