@@ -1,51 +1,71 @@
 from scapy.all import *
 import sys
-import threading 
+import gc
+import datetime
+import threading
 from threading import Lock
 from struct import *
 
-ip_comps = [b'\xFD\x00\x01\xD6\x40\x11\x7F\x00\x00\x01\x7F\x00\x00\x01\x04\xD3\x04\xD2\x00\x00\x00\x00\x00\x40\x00\x00\x20\x00\x00\x00\x90\x00\x00\x00\x00\x00\x00\x00\x00\x04',
-b'\xFD\x00\x01\xEA\x40\x11\x7F\x00\x00\x01\x7F\x00\x00\x01\x04\xD3\x04\xD2\x00\x00\x00\x00\x00\x40\x00\x00\x30\x00\x00\x00\x90\x00\x00\x01\x00\x00\x01\x2C\x00\x05\x81\x2C',
-b'\xFD\x00\x01\xAB\x40\x11\x7F\x00\x00\x01\x7F\x00\x00\x01\x04\xD3\x04\xD2\x00\x00\x00\x00\x00\x40\x00\x00\x30\x00\x00\x00\x90\x00\x00\x02\x00\x00\x02\x58\x00\x05\x81\x2C',
-b'\xFD\x00\x01\x27\x40\x11\x7F\x00\x00\x01\x7F\x00\x00\x01\x04\xD3\x04\xD2\x00\x00\x00\x00\x00\x40\x00\x00\x30\x00\x00\x00\x90\x00\x00\x03\x00\x00\x03\x84\x00\x05\x81\x2C',
-b'\x27\x00',
-b'\x2A\x00',
-b'\x37\x00',
-b'\x39\x00',
-b'\x43\x00',
-b'\x4E\x00']
-
 RTP_PAYLOAD = 'hello, Python world!'
 mutex = Lock()
+gc.disable()
 
 class Receiver(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
+    #def __init__(self):
+    #    threading.Thread.__init__(self)
 
     def received(self, p):
         mutex.acquire()
-        print "Received Packet on port 3, exiting"
-        hexdump(p)
-        print "End packet\n"
+        self.file_log_rx.write(str(p) + "\n")
+        self.it += 1
+        if self.it%1000 == 0:
+            print "Received Packet #%d on port 3" % self.it
+            print(datetime.datetime.now())
         mutex.release()
-        sys.exit(0)
-
+        if self.it >= self._Thread__kwargs['pkt_num']:
+            print "Received #%d packets. Finishing" % self.it
+            self.file_log_rx.close()
+            sys.exit(0)
     def run(self):
-        sniff(iface="veth7", prn=lambda x: self.received(x))
+        self.file_log_rx = open("log_rx", "w")
+        self.it = 0
+        while True:
+            sniff(iface="veth7", prn=lambda x: self.received(x))
 
 def main():
+    if len(sys.argv) == 1:
+        print "Total number of packet not defined. Using the input file size"
+        print "Use python send_and_receive.py <pkt_num> for generating a known number of packets"
+        it_total = 1000000
+    elif len(sys.argv) == 2:
+        it_total = int(sys.argv[1])
+        print "Generating #%d packets" % it_total
+    else:
+        print "Invalid parameters"
+        print "Use python send_and_receive.py <pkt_num> for generating a known number of packets"
+
     i = 0
-    for ip_comp in ip_comps:
-        mutex.acquire()
-        Receiver().start()
-        ip_comp = ip_comp + RTP_PAYLOAD
-        p = Ether(src="aa:aa:aa:aa:aa:aa",type=0xdd00)/ip_comp
-        i = i + 1
-        print "Sending Packet #%d on port 0, listening on port 3" % i
-        hexdump(p)
-        sendp(p, iface="veth1", verbose=0)
-        mutex.release()
-        time.sleep(0.1)
+    file_in = open("compressed_pkts", "r")
+    file_log_tx = open("log_tx", "w")
+    Receiver(kwargs={'pkt_num' : it_total}).start()
+
+    for line in file_in:
+        if i < it_total:
+            mutex.acquire()
+            p = Ether(dst="ff:ff:ff:ff:ff:ff", src="aa:aa:aa:aa:aa:aa",type=0xdd00)/line[:-1].decode("hex")
+            i = i + 1
+            if i%1000 == 0:
+                print "Sending Packet #%d on port 0, listening on port 3" % i
+                print(datetime.datetime.now())
+            file_log_tx.write(str(p) + "\n")
+            sendp(p, iface="veth1", verbose=0)
+            mutex.release()
+            time.sleep(0)
+        else:
+            break
+
+    file_in.close()
+    file_log_tx.close()
 
 if __name__ == '__main__':
     main()

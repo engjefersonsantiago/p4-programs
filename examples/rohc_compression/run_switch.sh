@@ -37,9 +37,13 @@ fi
 
 # This gets root permissions, and gives libtool the opportunity to "warm-up"
 sudo $SWITCH_PATH >/dev/null 2>&1
+#sudo $SWITCH_PATH rohc_compression.json \
+#    -i 0@veth0 -i 1@veth2 -i 2@veth4 -i 3@veth6 -i 4@veth8 \
+#    --nanolog ipc:///tmp/bm-0-log.ipc --log-console \
+#    --pcap &
 sudo $SWITCH_PATH rohc_compression.json \
     -i 0@veth0 -i 1@veth2 -i 2@veth4 -i 3@veth6 -i 4@veth8 \
-    --nanolog ipc:///tmp/bm-0-log.ipc --log-console \
+    --nanolog ipc:///tmp/bm-0-log.ipc \
     --pcap &
 sleep 2
 echo "**************************************"

@@ -1,7 +1,11 @@
 /*
- * Jeferson Santiago da Silva 
+ * Jeferson Santiago da Silva
  * Laurent Olivier Chiquette (l.o.chiquette@gmail.com)
  */
+
+
+#define USE_NATIVE_PRIMITIVE 0
+#define USE_RECIRCULATE 0
 
 header_type ethernet_t {
     fields {
@@ -35,13 +39,13 @@ header_type udp_t {
         bit<16> dstPort;
         bit<16> hdrLength;
         bit<16> chksum;
-    } 
+    }
 }
 
 // RTP header
 header_type rtp_t {
     fields {
-   	  bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
+	  bit<8>      version_pad_ext_nCRSC; // [7..6] version, [5] pad, [4] ext, [3..0] nCRSC
 	    bit<8>      marker_payloadType;    // [7] marker, [6..0] payloadType
 	    bit<16>     sequenceNumber;
 	    bit<32>     timestamp;
@@ -83,29 +87,29 @@ parser parse_ethernet {
 parser parse_ipv4 {
     extract(ipv4);
     return select(ipv4.protocol){
-        0x11      : parse_udp; 
-        default   : ingress;  
+        0x11      : parse_udp;
+        default   : ingress;
     }
 }
 
 parser parse_udp {
     extract(udp);
     return select(udp.dstPort){
-        1234      : parse_rtp; 
-        1235      : parse_rtp; 
-        5004      : parse_rtp; 
-        5005      : parse_rtp; 
-        default   : ingress;  
+        1234      : parse_rtp;
+        1235      : parse_rtp;
+        5004      : parse_rtp;
+        5005      : parse_rtp;
+        default   : ingress;
     }
 }
 
 parser parse_rtp {
     extract(rtp);
-    return ingress;  
+    return ingress;
 }
 
 extern_type ExternRohcCompressor {
-        
+
     attribute verbose {
         /* Must be either:
             quiet
@@ -122,7 +126,7 @@ extern ExternRohcCompressor my_rohc_comp {
 }
 
 extern_type ExternRohcDecompressor {
-        
+
     attribute verbose {
         /* Must be either:
             quiet
@@ -147,32 +151,50 @@ action _nop() {
 
 action set_port(in bit<9> port) {
     modify_field(standard_metadata.egress_spec, port);
-    intrinsic_metadata.recirculate_flag = 0; 
-    //intrinsic_metadata.modify_and_resubmit_flag = 0; 
+#if USE_RECIRCULATE
+    intrinsic_metadata.recirculate_flag = 0;
+#else
+    intrinsic_metadata.modify_and_resubmit_flag = 0;
+#endif
 }
 
 field_list resubmit_FL {
+#if USE_RECIRCULATE
     intrinsic_metadata.recirculate_flag;
-    //intrinsic_metadata.modify_and_resubmit_flag;
+#else
+    intrinsic_metadata.modify_and_resubmit_flag;
+#endif
 }
 
 action _resubmit() {
+#if USE_RECIRCULATE
     recirculate(resubmit_FL);
-    //modify_and_resubmit(resubmit_FL);
+#else
+    modify_and_resubmit(resubmit_FL);
+#endif
 }
 
 action _decompress() {
     ethernet.etherType = 0x0800;
-    my_rohc_decomp.rohc_decomp_header();  
-    //rohc_decomp_header();  
-    intrinsic_metadata.recirculate_flag = 1;  
-    //intrinsic_metadata.modify_and_resubmit_flag = 1;  
+#if USE_NATIVE_PRIMITIVE
+    rohc_decomp_header();
+#else
+    my_rohc_decomp.rohc_decomp_header();
+#endif
+#if USE_RECIRCULATE
+    intrinsic_metadata.recirculate_flag = 1;
+#else
+    intrinsic_metadata.modify_and_resubmit_flag = 1;
+#endif
 }
 
 action _compress () {
     //ipv4.ttl = ipv4.ttl - 1;
-    //my_rohc_comp.rohc_comp_header();
+#if USE_NATIVE_PRIMITIVE
     rohc_comp_header();
+#else
+    my_rohc_comp.rohc_comp_header();
+#endif
     modify_field(ethernet.etherType, 0xDD00);
 }
 
@@ -198,8 +220,11 @@ table t_ingress_rohc_decomp {
 
 table t_resub {
     reads {
+#if USE_RECIRCULATE
         intrinsic_metadata.recirculate_flag : exact;
-        //intrinsic_metadata.modify_and_resubmit_flag : exact;
+#else
+        intrinsic_metadata.modify_and_resubmit_flag : exact;
+#endif
     }
     actions {
         _nop; _resubmit;
@@ -212,7 +237,7 @@ table t_compress {
    reads {
         standard_metadata.egress_port : exact;
     }
-    actions { 
+    actions {
         _nop; _compress;
     }
     size : 1;
@@ -242,17 +267,23 @@ calculated_field ipv4.hdrChecksum  {
     //verify ipv4_checksum;
     update ipv4_checksum;
 }
- 
+
 control ingress {
     apply(t_ingress_1);
     apply(t_ingress_rohc_decomp);
-    if(intrinsic_metadata.recirculate_flag == 1)			
-    //if(intrinsic_metadata.modify_and_resubmit_flag == 1)			
+#if USE_RECIRCULATE
+    if(intrinsic_metadata.recirculate_flag == 1)
+#else
+    if(intrinsic_metadata.modify_and_resubmit_flag == 1)
+#endif
 	      apply(t_resub);
 }
 
 control egress {
+#if USE_RECIRCULATE
     if(intrinsic_metadata.recirculate_flag != 1)
-    //if(intrinsic_metadata.modify_and_resubmit_flag != 1)
+#else
+    if(intrinsic_metadata.modify_and_resubmit_flag != 1)
+#endif
         apply(t_compress);
 }
