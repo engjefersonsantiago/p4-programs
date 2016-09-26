@@ -5,7 +5,7 @@
 
 
 #define USE_NATIVE_PRIMITIVE 0
-#define USE_RECIRCULATE 0
+#define USE_RECIRCULATE 1
 
 header_type ethernet_t {
     fields {

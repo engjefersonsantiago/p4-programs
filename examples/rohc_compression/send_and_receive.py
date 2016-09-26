@@ -11,8 +11,11 @@ mutex = Lock()
 gc.disable()
 
 class Receiver(threading.Thread):
-    #def __init__(self):
-    #    threading.Thread.__init__(self)
+    def __init__(self, **kwargs):
+        threading.Thread.__init__(self)
+        self.it = 0
+        self.end = False
+        self.pkt_num = kwargs['pkt_num']
 
     def received(self, p):
         mutex.acquire()
@@ -22,15 +25,19 @@ class Receiver(threading.Thread):
             print "Received Packet #%d on port 3" % self.it
             print(datetime.datetime.now())
         mutex.release()
-        if self.it >= self._Thread__kwargs['pkt_num']:
+        if self.it >= self.pkt_num:
             print "Received #%d packets. Finishing" % self.it
             self.file_log_rx.close()
+            self.end = True
             sys.exit(0)
+
     def run(self):
         self.file_log_rx = open("log_rx", "w")
-        self.it = 0
         while True:
             sniff(iface="veth7", prn=lambda x: self.received(x))
+
+    def running(self):
+        return self.end
 
 def main():
     if len(sys.argv) == 1:
@@ -47,7 +54,7 @@ def main():
     i = 0
     file_in = open("compressed_pkts", "r")
     file_log_tx = open("log_tx", "w")
-    Receiver(kwargs={'pkt_num' : it_total}).start()
+    Receiver(pkt_num=it_total).start()
 
     for line in file_in:
         if i < it_total:
@@ -60,7 +67,7 @@ def main():
             file_log_tx.write(str(p) + "\n")
             sendp(p, iface="veth1", verbose=0)
             mutex.release()
-            time.sleep(0)
+            time.sleep(0.002)
         else:
             break
 
