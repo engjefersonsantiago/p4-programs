@@ -3,14 +3,12 @@ import os.path
 import re
 from struct import *
 import math
-import numpy
-import np
 
 def main():
     
     if len(sys.argv) != 4:
         param = len(sys.argv) - 1
-        print "Invalid parameter number. Expected at least 3 got %d" % param
+        print "Invalid parameter number. Expected 3 got %d" % param
         print "Usage python parser_and_calculate.py <log_file> <regex1> <samples_num>"
         return
     
@@ -24,7 +22,6 @@ def main():
     time_array = []
     for line in file_:
         if cnt < int(samples):
-            #print(cnt)
             if re.match(patern, line):
                 if not first_match:
                     time = str(re.sub(patern, '', line)).strip()
@@ -36,9 +33,6 @@ def main():
         else:
             break
 
-    #fft_ = []
-    #fft_ = np.fft.fft(time_array)
-    #print(fft_) 
     avg = sum(time_array)/len(time_array)
     print "Average time for #%d packets: %f usec" % (len(time_array), avg)
     sigma_sq = []
@@ -49,10 +43,6 @@ def main():
     
     print "Mean variance for #%d packets: %f usec" % (len(sigma_sq), sigma_sq_mean)
     print "Mean Deviation for #%d packets: %f usec" % (len(sigma_sq), math.sqrt(sigma_sq_mean))
-
-    #for i in time_array:
-    #    if i < avg - 5*math.sqrt(sigma_sq_mean) or i > avg + 5*math.sqrt(sigma_sq_mean):
-    #        print(i)
 
 if __name__ == '__main__':
     main()

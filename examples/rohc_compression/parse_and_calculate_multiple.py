@@ -8,8 +8,8 @@ def main():
     
     if len(sys.argv) != 5:
         param = len(sys.argv) - 1
-        print "Invalid parameter number. Expected at least 3 got %d" % param
-        print "Usage python parser_and_calculate.py <log_file> <regex1> <samples_num>"
+        print "Invalid parameter number. Expected 4 got %d" % param
+        print "Usage python parser_and_calculate_multiple.py <log_file> <regex1> <regex2> <samples_num>"
         return
     
     file_log = sys.argv[1] 
@@ -53,9 +53,6 @@ def main():
     
     print "Mean variance for #%d packets: %f usec" % (len(sigma_sq), sigma_sq_mean)
     print "Mean Deviation for #%d packets: %f usec" % (len(sigma_sq), math.sqrt(sigma_sq_mean))
-    #for i in time_array:
-    #    if i < avg - 5*math.sqrt(sigma_sq_mean) or i > avg + 5*math.sqrt(sigma_sq_mean):
-    #        print(i)
 
 if __name__ == '__main__':
     main()
