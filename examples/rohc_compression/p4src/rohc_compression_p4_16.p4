@@ -60,9 +60,16 @@ struct intrinsic_metadata_t {
 	bit<16>   modify_and_resubmit_flag;
 }
 
+struct local_metadata_t {
+	bit<9>   in_par_a;
+	bit<9>   in_par_b;
+	bit<9>   out_par;
+}
+
 struct metadata {
 	@metadata @name("intrinsic_metadata")
 	intrinsic_metadata_t intrinsic_metadata;
+	local_metadata_t local_metadata;
 }
 
 parser TopParser(packet_in b,
@@ -197,6 +204,7 @@ control egress (inout parsed_packet headers,
 				inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 	ExternRohcCompressor(0x0) my_rohc_comp;
+	//ext_type(0x1,0x1) my_ext_inst;
 
 	action _nop() {}
 
@@ -229,7 +237,11 @@ control egress (inout parsed_packet headers,
 			//t_compress.apply();
 			_compress ();
 		    standard_metadata.egress_port = 3;
-
+		    meta.local_metadata.in_par_a = 1;
+		    meta.local_metadata.in_par_b = 2;
+			//my_ext_inst.ext_method(	meta.local_metadata.in_par_a,
+			//						meta.local_metadata.in_par_b,
+			//						meta.local_metadata.out_par);
 		}
 	}
 }
