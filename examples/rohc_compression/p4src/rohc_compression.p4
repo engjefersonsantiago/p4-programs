@@ -263,10 +263,10 @@ field_list_calculation ipv4_checksum {
     output_width  : 16;
 }
 
-calculated_field ipv4.hdrChecksum  {
-    //verify ipv4_checksum;
-    update ipv4_checksum;
-}
+//calculated_field ipv4.hdrChecksum  {
+//    //verify ipv4_checksum;
+//    update ipv4_checksum;
+//}
 
 control ingress {
     apply(t_ingress_1);
