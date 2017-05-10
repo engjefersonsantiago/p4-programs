@@ -10,7 +10,7 @@
 #define USE_RECIRCULATE 1
 
 extern ExternRohcCompressor {
-	ExternRohcCompressor(bit<1> verbose);
+	ExternRohcCompressor(bool verbose);
 	void rohc_comp_header();
 }
 
@@ -130,7 +130,8 @@ control ingress(inout parsed_packet headers,
 				inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-	ExternRohcDecompressor(0x0) my_rohc_decomp;
+	@userextern @name("my_rohc_decomp")
+	ExternRohcDecompressor(0x1) my_rohc_decomp;
 	action _nop() {
 	}
 
@@ -218,7 +219,7 @@ control ingress(inout parsed_packet headers,
 control egress (inout parsed_packet headers,
 				inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
-	ExternRohcCompressor(0x0) my_rohc_comp;
+	ExternRohcCompressor(false) my_rohc_comp;
 	//ext_type(0x1,0x1) my_ext_inst;
 
 	action _nop() {}
