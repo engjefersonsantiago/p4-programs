@@ -5,7 +5,7 @@ How to build?
 - `cd ..`
 - `git clone https://github.com/engjefersonsantiago/behavioral-model.git bmv2`
 - `git clone https://github.com/engjefersonsantiago/p4c-bm.git p4c-bmv2`
-- `git clone --recursive https://github.com/engjefersonsantiago/p4c.git p4c`
+- `git clone --recursive https://github.com/engjefersonsantiago/p4c.git p4c -b fixed_externs_may2017`
 - `git clone https://github.com/engjefersonsantiago/rohc.git ROHC`
 - `cd ROHC`
 - `./autogen.sh`
@@ -21,6 +21,9 @@ How to build?
 - `cd ../../p4c-bmv2`
 - `sudo pip install -r requirements_v1_1.txt`
 - `cd ../examples/<target_program>`
+- `sudo ../veth_setup.sh`
+- `sudo ./run_switch_p4_<version>.sh`
+
 
 ## target_program
 

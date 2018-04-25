@@ -18,7 +18,7 @@ THIS_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source $THIS_DIR/../../env.sh
 
-P4C_EXE_PATH=$P4C_PATH/build/p4c
+P4C_EXE_PATH=$P4C_PATH/build/p4c-bm2-ss
 
 SWITCH_PATH=$BMV2_PATH/targets/simple_switch/simple_switch
 
@@ -29,7 +29,7 @@ CLI_PATH=$BMV2_PATH/targets/simple_switch/sswitch_CLI
 # minutes to give it time to start, then add the entries and put the switch
 # process back in the foreground
 set -m
-$P4C_EXE_PATH -b bmv2-v1model-p4org p4src/rohc_compression_p4_16.p4 -o program.bmv2.json -v
+$P4C_EXE_PATH p4src/rohc_compression_p4_16.p4 -o program.bmv2.json/rohc_compression_p4_16.json -v
 if [ $? -ne 0 ]; then
 echo "p4 compilation failed"
 exit 1
