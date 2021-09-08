@@ -1,0 +1,8 @@
+sudo rm -rf *.pcap
+sudo rm -rf *.json
+sudo rm -rf log_rx
+sudo rm -rf log_tx
+sudo rm -rf *.sw*
+sudo rm -rf p4src/*.sw*
+sudo rm -rf user_externs/*.sw*
+sudo killall simple_switch
